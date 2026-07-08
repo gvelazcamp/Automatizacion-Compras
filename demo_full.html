@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="color-scheme" content="dark">
+<title>Transformación Digital · Sector Compras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{ color-scheme: dark; }
+  :root{
+    --bg:#0b0e0f; --panel:#13171a; --line:#22282c;
+    --accent:#5eff9c; --accent-dim:#2c5c41;
+    --amber:#ffb454; --amber-dim:#5c4a28;
+    --blue:#00bbf9; --danger:#ff6b57; --danger-dim:#5c2c28;
+    --text:#e7ebec; --muted:#8b9499;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{ width:100vw; height:100vh; background:var(--bg); color:var(--text);
+    font-family:'Inter',sans-serif; overflow:hidden; position:relative; }
+  .grid-bg{ position:absolute; inset:0;
+    background-image:linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size:30px 30px; }
+  .stage{ position:relative; width:100%; height:100%; }
+  .scene{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    opacity:0; padding:22px 22px 150px; pointer-events:none; transition:opacity .25s ease; text-align:center; }
+  .scene.active{ opacity:1; pointer-events:auto; }
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes spin{ to{ transform:translate(-50%,-50%) rotate(360deg); } }
+  @keyframes spin-rev{ to{ transform:translate(-50%,-50%) rotate(-360deg); } }
+  @keyframes load{ 0%{transform:translateX(-100%); width:40%;} 50%{width:60%;} 100%{transform:translateX(250%); width:40%;} }
+
+  .step-tag{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:3px; color:var(--accent);
+    text-transform:uppercase; margin-bottom:16px; opacity:0; animation:fadeUp .5s ease .05s forwards; }
+  .scene-title{ font-size:19px; font-weight:800; line-height:1.35; max-width:300px; margin-bottom:18px;
+    opacity:0; animation:fadeUp .5s ease .1s forwards; }
+  .scene-sub{ font-size:12px; color:var(--muted); max-width:290px; line-height:1.6; margin-top:14px;
+    opacity:0; animation:fadeUp .5s ease .2s forwards; }
+
+  /* splash */
+  .splash-inner{ text-align:center; }
+  .flask-wrap{ width:120px; height:120px; margin:0 auto 26px; position:relative; display:flex; align-items:center; justify-content:center; }
+  .flask-ring2{ width:160px; height:160px; border-radius:50%; border:1px solid rgba(0,187,249,.3);
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); animation:spin-rev 3s linear infinite; }
+  .flask-ring{ width:124px; height:124px; border-radius:50%; border:2px solid transparent;
+    border-top-color:#5eff9c; border-right-color:#00bbf9; position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%); animation:spin 1.4s linear infinite; }
+  .flask-icon{ font-size:44px; position:relative; z-index:2; filter:drop-shadow(0 0 14px rgba(94,255,156,.35)); }
+  .splash-title{ font-size:1.45rem; font-weight:800; line-height:1.35; max-width:280px; margin:0 auto; }
+  .splash-title b{ background:linear-gradient(90deg,#5eff9c,#00bbf9); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .splash-status{ margin-top:20px; color:#8fa3b8; font-size:.8rem; letter-spacing:1px; font-family:'JetBrains Mono',monospace; }
+  .splash-bar-bg{ margin:16px auto 0; width:190px; height:4px; background:rgba(255,255,255,.08); border-radius:4px; overflow:hidden; }
+  .splash-bar-fill{ height:100%; width:40%; background:linear-gradient(90deg,#5eff9c,#00bbf9); border-radius:4px; animation:load 1.2s ease-in-out infinite; }
+
+  /* intro pain points */
+  .pain-list{ display:flex; flex-direction:column; gap:6px; max-width:300px; margin:0 auto; }
+  .pain-row{ display:flex; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--line);
+    border-radius:9px; padding:7px 12px; text-align:left; opacity:0; animation:fadeUp .5s ease forwards; }
+  .pain-ico{ font-size:14px; }
+  .pain-txt{ font-size:11px; color:var(--text); }
+  .pain-time{ margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--danger); font-weight:700; }
+
+  /* inbox */
+  .inbox-wrap{ width:100%; max-width:320px; background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,.55); text-align:left; }
+  .inbox-head{ height:32px; background:#181c1f; display:flex; align-items:center; padding:0 12px; gap:7px;
+    border-bottom:1px solid var(--line); }
+  .dot{ width:9px; height:9px; border-radius:50%; }
+  .dot.r{background:#ff5f57;} .dot.y{background:#febc2e;} .dot.g{background:#28c840;}
+  .inbox-title{ margin-left:6px; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted); }
+  .inbox-row{ display:flex; align-items:center; gap:9px; padding:9px 12px; border-bottom:1px solid var(--line);
+    opacity:0; animation:fadeUp .45s ease forwards; }
+  .inbox-row:last-child{ border-bottom:none; }
+  .inbox-ico{ font-size:15px; }
+  .inbox-meta{ flex:1; min-width:0; }
+  .inbox-from{ font-size:10px; color:var(--muted); }
+  .inbox-subj{ font-size:12px; color:var(--text); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .inbox-tag{ font-family:'JetBrains Mono',monospace; font-size:8.5px; padding:2px 6px; border-radius:5px;
+    border:1px solid var(--line); color:var(--muted); flex-shrink:0; }
+  .inbox-tag.pdf{ color:var(--danger); border-color:var(--danger-dim); }
+  .inbox-tag.xls{ color:var(--accent); border-color:var(--accent-dim); }
+
+  /* terminal */
+  .terminal{ width:100%; max-width:320px; background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    box-shadow:0 30px 80px rgba(0,0,0,.55); text-align:left; }
+  .term-bar{ height:32px; background:#181c1f; display:flex; align-items:center; padding:0 12px; gap:7px; border-bottom:1px solid var(--line); }
+  .term-title{ margin-left:8px; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted); }
+  .term-body{ padding:16px 15px; font-family:'JetBrains Mono',monospace; font-size:10px; line-height:2; color:#c4cdd0; min-height:160px; }
+  .term-body .prompt{ color:var(--accent); } .term-body .path{ color:#7fb4ff; } .term-body .ok{ color:var(--accent); }
+  .term-body .warn{ color:var(--amber); } .term-body .bad{ color:var(--danger); } .term-body .tag{ color:#9b8cff; }
+  .typeline{ overflow:hidden; white-space:nowrap; border-right:2px solid var(--accent); }
+  .cursor-off{ border-right:none; }
+
+  /* pdf keyword mock */
+  .pdf-mock{ width:250px; background:#f4f1ea; color:#2a2a28; border-radius:6px; padding:16px 14px;
+    font-family:'Inter',sans-serif; font-size:10px; line-height:1.75; box-shadow:0 20px 60px rgba(0,0,0,.5); text-align:left; }
+  .pdf-mock .kw{ background:rgba(94,255,156,.5); border-radius:3px; padding:0 3px; font-weight:700; }
+  .pdf-mock .head{ font-weight:800; font-size:11px; margin-bottom:8px; letter-spacing:.5px; }
+
+  .bucket-row{ display:flex; gap:9px; justify-content:center; flex-wrap:wrap; max-width:310px; margin:16px auto 0; }
+  .bucket{ flex:1 1 90px; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 8px;
+    opacity:0; animation:fadeUp .5s ease forwards; }
+  .bucket-label{ font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--muted);
+    margin-bottom:5px; text-transform:uppercase; }
+  .bucket-val{ font-size:18px; font-weight:800; color:var(--accent); }
+
+  /* email reply */
+  .mail-card{ width:100%; max-width:300px; background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:16px; text-align:left; box-shadow:0 30px 80px rgba(0,0,0,.55); }
+  .mail-hdr{ font-size:11.5px; font-weight:700; margin-bottom:4px; }
+  .mail-from{ font-size:10px; color:var(--muted); margin-bottom:10px; }
+  .mail-body{ font-size:11.5px; color:#c4cdd0; line-height:1.6; margin-bottom:12px; }
+  .reply-btn{ display:inline-block; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700;
+    padding:7px 14px; border-radius:7px; border:1px solid var(--accent-dim); color:var(--accent);
+    background:rgba(94,255,156,.08); opacity:0; animation:fadeUp .5s ease .3s forwards; }
+  .toast{ margin-top:12px; font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--accent);
+    opacity:0; }
+  .toast.show{ animation:fadeUp .4s ease forwards; }
+
+  .xls-mock{ width:250px; margin:14px auto 0; background:#fff; color:#222; border-radius:6px; overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.5); font-family:'JetBrains Mono',monospace; font-size:9.5px;
+    opacity:0; animation:fadeUp .5s ease .4s forwards; }
+  .xls-head{ background:#217346; color:#fff; padding:6px 10px; font-weight:700; font-size:10px; }
+  .xls-row{ display:grid; grid-template-columns:1fr .7fr 1.5fr; padding:6px 10px; border-bottom:1px solid #e5e5e5; }
+  .xls-row.hd{ background:#eef7f0; font-weight:700; color:#217346; }
+  .xls-row:last-child{ border-bottom:none; }
+
+  /* login */
+  .login-box{ width:270px; background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:22px 20px; box-shadow:0 30px 80px rgba(0,0,0,.55); text-align:left; }
+  .login-logo{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--blue);
+    margin-bottom:16px; text-align:center; }
+  .login-field{ margin-bottom:12px; }
+  .login-label{ font-size:9.5px; color:var(--muted); margin-bottom:5px; font-family:'JetBrains Mono',monospace; letter-spacing:1px; }
+  .login-input{ background:#0e1214; border:1px solid var(--line); border-radius:7px; padding:9px 10px;
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--text); min-height:13px; }
+  .login-btn{ margin-top:8px; background:linear-gradient(90deg,#5eff9c,#00bbf9); color:#04150c; font-weight:800;
+    font-size:11.5px; text-align:center; padding:10px; border-radius:8px; letter-spacing:.5px; opacity:.4; transition:opacity .3s; }
+  .login-btn.ready{ opacity:1; }
+  .login-status{ margin-top:14px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted); min-height:14px; }
+
+  /* table mock */
+  .table-mock{ width:100%; max-width:320px; background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    overflow:hidden; text-align:left; box-shadow:0 30px 80px rgba(0,0,0,.55); }
+  .tm-head,.tm-row{ display:grid; grid-template-columns:1fr 56px 62px; padding:8px 12px; font-size:10px; align-items:center; }
+  .tm-head{ background:#181c1f; color:var(--muted); font-family:'JetBrains Mono',monospace; border-bottom:1px solid var(--line); }
+  .tm-row{ border-bottom:1px solid var(--line); color:var(--text); transition:background .3s; }
+  .tm-row:last-child{ border-bottom:none; }
+  .tm-row.sel{ background:rgba(94,255,156,.08); }
+  .status-pill{ font-family:'JetBrains Mono',monospace; font-size:8.5px; padding:3px 7px; border-radius:20px;
+    border:1px solid var(--line); color:var(--muted); text-align:center; }
+  .status-pill.ok{ color:var(--accent); border-color:var(--accent-dim); }
+  .status-pill.warn{ color:var(--amber); border-color:var(--amber-dim); }
+  .status-pill.wait{ color:var(--muted); }
+  .ingest-log{ font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted); margin-top:12px; min-height:34px; text-align:left; max-width:300px; }
+  .ingest-log div{ opacity:0; margin-bottom:4px; }
+  .ingest-log div.show{ animation:fadeUp .4s ease forwards; }
+
+  /* flow diagram */
+  .flow-col{ display:flex; flex-direction:column; gap:10px; align-items:center; }
+  .flow-row{ display:flex; align-items:center; gap:8px; justify-content:center; flex-wrap:wrap; max-width:320px; }
+  .flow-chip{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:9px 13px;
+    font-size:11px; font-weight:700; opacity:0; animation:fadeUp .5s ease forwards; }
+  .flow-chip.accent{ border-color:var(--accent-dim); color:var(--accent); }
+  .flow-arrow{ color:var(--muted); font-size:15px; opacity:0; animation:fadeUp .4s ease forwards; }
+  .flow-note{ font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted); margin-top:14px;
+    opacity:0; animation:fadeUp .5s ease forwards; }
+
+  /* price */
+  .price-box{ display:flex; align-items:center; gap:16px; background:var(--panel); border:1px solid var(--line);
+    border-radius:12px; padding:20px 26px; box-shadow:0 30px 80px rgba(0,0,0,.55); }
+  .price-old{ font-family:'JetBrains Mono',monospace; font-size:18px; color:var(--muted); text-decoration:line-through; }
+  .price-arrow{ color:var(--muted); font-size:18px; }
+  .price-new{ font-family:'JetBrains Mono',monospace; font-size:24px; color:var(--accent); font-weight:800; }
+  .price-steps{ display:flex; flex-direction:column; gap:7px; margin-top:16px; text-align:left; max-width:280px; }
+  .price-step{ display:flex; gap:8px; align-items:center; font-size:11px; color:var(--text); opacity:0; animation:fadeUp .5s ease forwards; }
+  .price-step .chk{ color:var(--accent); font-weight:800; }
+
+  /* gauge */
+  .gauge-wrap{ width:220px; }
+  .gauge-bar-bg{ height:10px; background:#181c1f; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+  .gauge-bar-fill{ height:100%; background:linear-gradient(90deg,var(--danger),var(--amber)); width:22%;
+    border-radius:6px; }
+  .gauge-label{ display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:9.5px;
+    color:var(--muted); margin-top:6px; }
+  .oc-card{ margin-top:18px; background:var(--panel); border:1px solid var(--accent-dim); border-radius:10px;
+    padding:12px 16px; opacity:0; animation:fadeUp .5s ease .6s forwards; }
+  .oc-title{ font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent); letter-spacing:1px; margin-bottom:4px; }
+  .oc-sub{ font-size:11.5px; color:var(--text); }
+
+  /* report */
+  .report-card{ width:260px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px;
+    text-align:left; box-shadow:0 30px 80px rgba(0,0,0,.55); }
+  .report-row{ display:flex; justify-content:space-between; font-size:11px; padding:6px 0; border-bottom:1px solid var(--line); }
+  .report-row:last-child{ border-bottom:none; }
+  .report-row b{ color:var(--accent); }
+
+  /* closing benefits */
+  .benefit-grid{ display:flex; flex-direction:column; gap:9px; max-width:300px; margin:0 auto; }
+  .benefit-row{ display:flex; gap:10px; align-items:center; background:var(--panel); border:1px solid var(--line);
+    border-radius:10px; padding:10px 14px; text-align:left; opacity:0; animation:fadeUp .5s ease forwards; }
+  .benefit-ico{ font-size:16px; }
+  .benefit-txt{ font-size:11.5px; }
+
+  .gns-window{ width:290px; background:#fff; color:#1b2733; border-radius:8px; overflow:visible;
+    box-shadow:0 30px 80px rgba(0,0,0,.6); text-align:left; font-family:'Inter',sans-serif; }
+  .gns-topbar{ background:#0f4c9c; color:#fff; font-size:10.5px; padding:9px 12px; display:flex; align-items:center;
+    gap:8px; font-weight:700; letter-spacing:.4px; border-radius:8px 8px 0 0; }
+  .gns-body{ padding:14px; position:relative; }
+  .gns-label{ font-size:8.5px; color:#5b6b7a; margin-bottom:3px; font-family:'JetBrains Mono',monospace; letter-spacing:.5px; text-transform:uppercase; }
+  .gns-field{ margin-bottom:9px; position:relative; }
+  .gns-input{ border:1px solid #c7d0d8; border-radius:5px; padding:6px 8px; font-size:10.5px; background:#fff; min-height:13px; color:#1b2733; }
+  .gns-input.filled{ border-color:#0f4c9c; background:#f3f7fd; }
+  .gns-dropdown{ position:absolute; left:0; right:0; background:#fff; border:1px solid #c7d0d8; border-radius:0 0 6px 6px;
+    box-shadow:0 14px 30px rgba(0,0,0,.25); z-index:5; opacity:0; animation:fadeUp .3s ease forwards; }
+  .gns-dropdown div{ padding:7px 9px; font-size:10px; border-bottom:1px solid #eef1f4; color:#33414c; }
+  .gns-dropdown div:last-child{ border-bottom:none; }
+  .gns-dropdown div b{ color:#0f4c9c; }
+  .gns-dropdown div.sel{ background:#eaf1fc; font-weight:700; color:#0f4c9c; }
+  .gns-row2{ display:flex; gap:8px; }
+  .gns-row2 .gns-field{ flex:1; }
+  .gns-item-grid{ display:grid; grid-template-columns:1fr 40px 1fr; gap:6px; margin:8px 0; padding:8px;
+    background:#f7f9fb; border:1px solid #eef1f4; border-radius:6px; font-size:9.5px; }
+  .gns-item-grid div{ opacity:0; animation:fadeUp .4s ease forwards; }
+  .gns-item-lbl{ color:#8a97a3; font-family:'JetBrains Mono',monospace; font-size:8px; grid-column:1/-1; margin-bottom:-2px; }
+  .gns-footer{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:10px; border-top:1px solid #eef1f4; }
+  .gns-total{ font-size:12px; font-weight:800; color:#1b2733; }
+  .gns-total b{ color:#0f4c9c; }
+  .gns-btn{ background:#0f4c9c; color:#fff; font-size:10px; font-weight:700; padding:7px 13px; border-radius:5px;
+    opacity:.35; transition:opacity .3s; }
+  .gns-btn.ready{ opacity:1; }
+  .gns-confirm{ margin-top:10px; font-family:'JetBrains Mono',monospace; font-size:9.5px; color:#1a7f4b;
+    background:#e8f8ee; border:1px solid #b7ecc9; border-radius:6px; padding:7px 10px; opacity:0; text-align:center; line-height:1.5; }
+  .gns-dropdown div.hl{ transition:background .3s; }
+  .gns-dropdown div.hl.selnow{ background:#eaf1fc; font-weight:700; color:#0f4c9c; }
+  .oc-table{ margin:8px 0; border:1px solid #eef1f4; border-radius:6px; overflow:hidden; font-size:9px; }
+  .oc-thead,.oc-trow{ display:grid; grid-template-columns:1fr .6fr 1.4fr .8fr; padding:5px 7px; gap:4px; }
+  .oc-thead{ background:#f7f9fb; color:#8a97a3; font-family:'JetBrains Mono',monospace; font-size:8px; text-transform:uppercase; }
+  .oc-trow{ border-top:1px solid #eef1f4; color:#33414c; opacity:0; animation:fadeUp .4s ease forwards; }
+  .oc-trow div:last-child{ text-align:right; font-weight:700; }
+
+  .gns-confirm.show{ animation:fadeUp .4s ease forwards; }
+  .tap-zone{ position:absolute; top:0; bottom:104px; width:28%; z-index:5; }
+  .tap-zone.left{ left:0; } .tap-zone.right{ right:0; }
+  .navbar{ position:absolute; left:0; right:0; bottom:0; height:56px; display:flex; align-items:center;
+    justify-content:space-between; padding:0 16px; background:linear-gradient(0deg, rgba(0,0,0,.55), transparent);
+    z-index:10; }
+  .audiobar{ position:absolute; left:0; right:0; bottom:56px; height:48px; display:flex; align-items:center;
+    justify-content:center; gap:10px; z-index:10; }
+  .nav-btn{ width:38px; height:38px; border-radius:50%; background:var(--panel); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; color:var(--text); font-size:16px; cursor:pointer; }
+  .nav-btn.small{ width:34px; height:34px; font-family:'JetBrains Mono',monospace; font-weight:700; }
+  .nav-count{ font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--muted); }
+  .progress-bg{ position:absolute; top:0; left:0; right:0; height:3px; background:rgba(255,255,255,.06); z-index:10; }
+  .progress-fill{ height:100%; background:linear-gradient(90deg,#5eff9c,#00bbf9); transition:width .3s ease; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="grid-bg"></div>
+  <div class="progress-bg"><div class="progress-fill" id="progressFill"></div></div>
+
+  <!-- 0 splash -->
+  <div class="scene" id="scene0">
+    <div class="splash-inner">
+      <div class="flask-wrap">
+        <div class="flask-ring2"></div><div class="flask-ring"></div>
+        <div class="flask-icon">🧪</div>
+      </div>
+      <div class="splash-title">Transformación Digital<br><b>Sector Compras</b></div>
+      <div class="splash-status">TOCÁ PARA COMENZAR →</div>
+      <div class="splash-bar-bg"><div class="splash-bar-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- 1 problema -->
+  <div class="scene" id="scene1">
+    <div class="step-tag">El problema hoy</div>
+    <div class="scene-title">Todo el flujo de compras<br>se hace a mano, todos los días</div>
+    <div class="pain-list">
+      <div class="pain-row" style="animation-delay:.15s"><span class="pain-ico">📥</span><span class="pain-txt">Revisar mails uno por uno</span></div>
+      <div class="pain-row" style="animation-delay:.3s"><span class="pain-ico">🖨️</span><span class="pain-txt">Imprimir e ingresar a mano en GNS+</span></div>
+      <div class="pain-row" style="animation-delay:.45s"><span class="pain-ico">🧾</span><span class="pain-txt">Ingreso manual de facturas</span></div>
+      <div class="pain-row" style="animation-delay:.6s"><span class="pain-ico">📝</span><span class="pain-txt">Generación de órdenes de compra</span></div>
+      <div class="pain-row" style="animation-delay:.75s"><span class="pain-ico">🔁</span><span class="pain-txt">Mover stock entre depósitos</span></div>
+      <div class="pain-row" style="animation-delay:.9s"><span class="pain-ico">⚠️</span><span class="pain-txt">Errores de tipeo en cada carga</span><span class="pain-time">-100%</span></div>
+    </div>
+    <div class="scene-sub">Este proyecto automatiza cada uno de estos pasos.</div>
+  </div>
+
+  <!-- 2 mail ingreso -->
+  <div class="scene" id="scene2">
+    <div class="step-tag">Paso 1 · Procesador de mail</div>
+    <div class="inbox-wrap">
+      <div class="inbox-head"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><div class="inbox-title">bandeja-compras@fertilab</div></div>
+      <div class="inbox-row" style="animation-delay:.15s"><span class="inbox-ico">📦</span><div class="inbox-meta"><div class="inbox-from">Roche Diagnostics</div><div class="inbox-subj">Remito_00456.pdf</div></div><span class="inbox-tag pdf">PDF</span></div>
+      <div class="inbox-row" style="animation-delay:.3s"><span class="inbox-ico">🧾</span><div class="inbox-meta"><div class="inbox-from">Proveedor ANDA</div><div class="inbox-subj">Factura_A0001-00345.pdf</div></div><span class="inbox-tag pdf">PDF</span></div>
+      <div class="inbox-row" style="animation-delay:.45s"><span class="inbox-ico">💵</span><div class="inbox-meta"><div class="inbox-from">Distribuidora Montes</div><div class="inbox-subj">Contado_reactivos.pdf</div></div><span class="inbox-tag pdf">PDF</span></div>
+      <div class="inbox-row" style="animation-delay:.6s"><span class="inbox-ico">📋</span><div class="inbox-meta"><div class="inbox-from">Compras Internas</div><div class="inbox-subj">pedido_insumos_HT.xlsx</div></div><span class="inbox-tag xls">XLS</span></div>
+    </div>
+    <div class="scene-sub">El sistema entra solo al correo y clasifica cada adjunto por tipo.</div>
+  </div>
+
+  <!-- 3 clasificacion keywords -->
+  <div class="scene" id="scene3">
+    <div class="step-tag">Paso 2 · Lectura por palabras clave</div>
+    <div class="pdf-mock">
+      <div class="head">Remito_00456.pdf</div>
+      Fertilab SA — Depósito Central<br>
+      Tipo de comprobante: <span class="kw">REMITO</span><br>
+      N° documento: <span class="kw">00456</span><br>
+      Lote: <span class="kw">L-2026-0456</span><br>
+      Estado: <span class="kw">OK RECIBIDO</span>
+    </div>
+    <div class="bucket-row">
+      <div class="bucket" style="animation-delay:.5s"><div class="bucket-label">Remito</div><div class="bucket-val">1</div></div>
+      <div class="bucket" style="animation-delay:.65s"><div class="bucket-label">Factura</div><div class="bucket-val">2</div></div>
+      <div class="bucket" style="animation-delay:.8s"><div class="bucket-label">Contado</div><div class="bucket-val">1</div></div>
+    </div>
+    <div class="scene-sub">Detecta tipo, número y lote automáticamente, sin intervención manual.</div>
+  </div>
+
+  <!-- 4 confirmacion stock -->
+  <div class="scene" id="scene4">
+    <div class="step-tag">Paso 3 · Confirmación de recepción</div>
+    <div class="mail-card">
+      <div class="mail-hdr">RE: Remito_00456.pdf</div>
+      <div class="mail-from">Stock → Compras</div>
+      <div class="mail-body">"Mercadería recibida y verificada, OK para procesar."</div>
+      <div class="reply-btn">✓ Confirmar recepción</div>
+      <div class="toast" id="toast4">→ PDF descargado automáticamente · listo para GNS+</div>
+    </div>
+  </div>
+
+  <!-- 5 login GNS -->
+  <div class="scene" id="scene5">
+    <div class="step-tag">Paso 4 · Robot ingresa a GNS+</div>
+    <div class="login-box">
+      <div class="login-logo">GNS+ · ACCESO</div>
+      <div class="login-field"><div class="login-label">USUARIO</div><div class="login-input" id="loginUser"></div></div>
+      <div class="login-field"><div class="login-label">CONTRASEÑA</div><div class="login-input" id="loginPass"></div></div>
+      <div class="login-btn" id="loginBtn">INGRESAR</div>
+      <div class="login-status" id="loginStatus"></div>
+    </div>
+  </div>
+
+  <!-- 6 GNS+ seleccion tipo comprobante -->
+  <div class="scene" id="scene6">
+    <div class="step-tag">Paso 5 · Tipo de comprobante en GNS+</div>
+    <div class="gns-window">
+      <div class="gns-topbar">GNS+ · Gestión de Comprobantes</div>
+      <div class="gns-body">
+        <div class="gns-label">Tipo de Comprobante</div>
+        <div class="gns-field">
+          <div class="gns-input" id="gnsSearch"></div>
+          <div class="gns-dropdown" id="gnsDropdown" style="display:none">
+            <div>Compra <b>Cré</b>dito (FERTILAB SA)</div>
+            <div>Nota de <b>Cré</b>dito - Cliente (FERTILAB SA)</div>
+            <div>Nota de <b>Cré</b>dito - Proveedor (FERTILAB SA)</div>
+            <div>Venta <b>Cré</b>dito (FERTILAB SA)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="scene-sub">El robot escribe la palabra clave y selecciona el tipo correcto según el comprobante leído.</div>
+  </div>
+
+  <!-- 7 GNS+ modal carga de datos -->
+  <div class="scene" id="scene7">
+    <div class="step-tag">Paso 6 · Carga de datos del comprobante</div>
+    <div class="gns-window" style="width:310px">
+      <div class="gns-topbar">Ingreso de Comprobante · COMPRA CRÉDITO</div>
+      <div class="gns-body">
+        <div class="gns-row2">
+          <div class="gns-field"><div class="gns-label">Proveedor</div><div class="gns-input" id="fProveedor"></div></div>
+          <div class="gns-field"><div class="gns-label">Depósito Destino</div><div class="gns-input" id="fDeposito"></div></div>
+        </div>
+        <div class="gns-row2">
+          <div class="gns-field"><div class="gns-label">Moneda</div><div class="gns-input" id="fMoneda"></div></div>
+          <div class="gns-field"><div class="gns-label">Serie/Número</div><div class="gns-input" id="fSerie"></div></div>
+        </div>
+        <div class="gns-item-grid" id="itemGrid">
+          <div class="gns-item-lbl" style="animation-delay:1.4s">Código · Cantidad · Concepto</div>
+          <div id="itCod" style="animation-delay:1.5s"></div>
+          <div id="itCant" style="animation-delay:1.6s"></div>
+          <div id="itConc" style="animation-delay:1.7s"></div>
+        </div>
+        <div class="gns-hint" style="font-size:9.5px;color:#5b6b7a;margin-top:8px">Según palabra clave, el procesador reconoce e ingresa al comprobante correspondiente</div>
+        <div class="gns-footer">
+          <div class="gns-total">TOTAL: <b id="fTotal">—</b></div>
+          <div class="gns-btn" id="gnsAceptar">Aceptar</div>
+        </div>
+        <div class="gns-confirm" id="gnsConfirm">✓ Comprobante ingresado en GNS+ · factura aceptada</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8 GNS+ tipo movimiento de stock -->
+  <div class="scene" id="scene8">
+    <div class="step-tag">Paso 7A · Movimiento de stock en GNS+</div>
+    <div class="gns-window">
+      <div class="gns-topbar">GNS+ · Gestión de Comprobantes</div>
+      <div class="gns-body">
+        <div class="gns-label">Tipo de Comprobante</div>
+        <div class="gns-field">
+          <div class="gns-input" id="movSearch"></div>
+          <div class="gns-dropdown" id="movDropdown" style="display:none">
+            <div><b>Mov</b>imiento de Stock (FERTILAB SA)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="scene-sub">Cada familia de insumos ya sabe a qué depósito destino pertenece.</div>
+  </div>
+
+  <!-- 9 GNS+ modal movimiento stock -->
+  <div class="scene" id="scene9">
+    <div class="step-tag">Paso 7B · Depósito origen → destino</div>
+    <div class="gns-window" style="width:310px">
+      <div class="gns-topbar">Ingreso de Comprobante · MOVIMIENTO DE STOCK</div>
+      <div class="gns-body">
+        <div class="gns-row2">
+          <div class="gns-field"><div class="gns-label">Depósito Origen</div><div class="gns-input filled">Casa Central</div></div>
+          <div class="gns-field">
+            <div class="gns-label">Depósito Destino</div>
+            <div class="gns-input" id="movDepDestino"></div>
+            <div class="gns-dropdown" id="movDepList" style="display:none; max-height:110px; overflow-y:auto;">
+              <div>Inmunodiagnóstico</div><div class="hl" id="medicareOpt">Inmunoquímica</div><div>Laboratorio Maldonado</div>
+              <div>Laboratorio Villamil</div><div>Lagomar</div><div>Medicare</div>
+              <div>Microbiología</div><div>Platinum</div><div>Secretaría</div>
+            </div>
+          </div>
+        </div>
+        <div class="gns-item-grid" id="movItemGrid">
+          <div class="gns-item-lbl" style="animation-delay:1.6s">Código · Cantidad · Concepto</div>
+          <div id="movCod" style="animation-delay:1.7s"></div>
+          <div id="movCant" style="animation-delay:1.8s"></div>
+          <div id="movConc" style="animation-delay:1.9s"></div>
+        </div>
+        <div class="gns-footer">
+          <div class="gns-total" style="font-size:9.5px;color:#5b6b7a">Familia → Depósito relacionados automáticamente</div>
+          <div class="gns-btn" id="movAceptar">Aceptar</div>
+        </div>
+        <div class="gns-confirm" id="movConfirm">✓ Movimiento registrado · 07:00 todos los días · 0 errores de tipeo</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7C mail con xls -->
+  <div class="scene" id="scene10">
+    <div class="step-tag">Paso 7C · Pedido recibido por mail</div>
+    <div class="mail-card">
+      <div class="mail-hdr">📎 pedido_insumos_HT.xlsx</div>
+      <div class="mail-from">De: Compras Internas</div>
+      <div class="mail-body">El procesador detecta el adjunto XLS y lo descarga automáticamente.</div>
+    </div>
+    <div class="xls-mock">
+      <div class="xls-head">pedido_insumos_HT.xlsx</div>
+      <div class="xls-row hd"><div>Código</div><div>Cant.</div><div>Concepto</div></div>
+      <div class="xls-row"><div>RCT-2210</div><div>30</div><div>Reactivo Química Clínica</div></div>
+    </div>
+    <div class="scene-sub">A partir de este pedido, el sistema arma la obligación en GNS+.</div>
+  </div>
+
+  <!-- 8 obligacion -->
+  <div class="scene" id="scene11">
+    <div class="step-tag">Paso 8 · Registro de obligación</div>
+    <div class="gns-window" style="width:300px">
+      <div class="gns-topbar">Agregar Nueva Obligación</div>
+      <div class="gns-body">
+        <div class="gns-row2">
+          <div class="gns-field"><div class="gns-label">Entidad</div><div class="gns-input" id="obEntidad"></div></div>
+          <div class="gns-field"><div class="gns-label">Categoría</div><div class="gns-input" id="obCategoria"></div></div>
+        </div>
+        <div class="gns-row2">
+          <div class="gns-field"><div class="gns-label">Tipo</div><div class="gns-input" id="obTipo"></div></div>
+          <div class="gns-field"><div class="gns-label">Estado</div><div class="gns-input" id="obEstado"></div></div>
+        </div>
+        <div class="gns-row2">
+          <div class="gns-field"><div class="gns-label">Prioridad</div><div class="gns-input" id="obPrioridad"></div></div>
+          <div class="gns-field"><div class="gns-label">Responsable</div><div class="gns-input" id="obResponsable"></div></div>
+        </div>
+        <div class="gns-footer">
+          <div class="gns-total" style="font-size:9.5px;color:#5b6b7a">Generada a partir del pedido XLS recibido</div>
+          <div class="gns-btn" id="obAceptar">Aceptar</div>
+        </div>
+      </div>
+    </div>
+    <div class="scene-sub">Todo pedido de insumos se registra primero como obligación en GNS+.</div>
+  </div>
+
+  <!-- 9 orden de compra -->
+  <div class="scene" id="scene12">
+    <div class="step-tag">Paso 9 · Orden de compra con precios</div>
+    <div class="gns-window" style="width:320px">
+      <div class="gns-topbar">Modificación de Comprobante · ORDEN DE COMPRA</div>
+      <div class="gns-body">
+        <div class="gns-row2">
+          <div class="gns-field"><div class="gns-label">Proveedor</div><div class="gns-input filled">Roche Internacional Ltd.</div></div>
+          <div class="gns-field"><div class="gns-label">Moneda</div><div class="gns-input filled">$</div></div>
+        </div>
+        <div class="oc-table" id="ocTable">
+          <div class="oc-thead"><div>Código</div><div>Cant.</div><div>Concepto</div><div>Total</div></div>
+          <div class="oc-trow" style="animation-delay:.4s"><div>74200...</div><div>3,000</div><div>CELLPACK DCL 300</div><div>10.495,83</div></div>
+          <div class="oc-trow" style="animation-delay:.7s"><div>78380...</div><div>1,000</div><div>LYSERCELL-WNR 210A</div><div>6.446,37</div></div>
+          <div class="oc-trow" style="animation-delay:1s"><div>69754...</div><div>1,000</div><div>Cellclean Auto</div><div>2.274,23</div></div>
+        </div>
+        <div class="gns-footer">
+          <div class="gns-total">TOTAL: <b id="ocTotal">—</b></div>
+          <div class="gns-btn" id="ocAceptar">Aceptar</div>
+        </div>
+        <div class="gns-confirm" id="ocConfirm">✓ Orden de compra generada y enviada a Roche Internacional</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10 pedidos roche -->
+  <div class="scene" id="scene13">
+    <div class="step-tag">Paso 10 · Pedidos Roche</div>
+    <div class="mail-card">
+      <div class="mail-hdr">🧬 Formato Roche detectado</div>
+      <div class="mail-from">pedido_roche_urgente.xlsx</div>
+      <div class="mail-body">Reconoce el formato propio de Roche y lo procesa en el programa de ellos con sus pasos correspondientes automatizados, diferenciando pedido común, urgencia o determinado.</div>
+      <div class="bucket-row" style="margin-top:4px">
+        <div class="bucket" style="animation-delay:.4s"><div class="bucket-label">Tipo</div><div class="bucket-val" style="font-size:13px">URGENTE</div></div>
+      </div>
+    </div>
+    <div class="scene-sub">Ingreso automático directo al programa de Roche.</div>
+  </div>
+
+  <!-- 10 stock minimo -->
+  <div class="scene" id="scene14">
+    <div class="step-tag">Paso 11 · Stock mínimo</div>
+    <div class="scene-title">Reactivo HbA1c bajo el mínimo</div>
+    <div class="gauge-wrap">
+      <div class="gauge-bar-bg"><div class="gauge-bar-fill"></div></div>
+      <div class="gauge-label"><span>Actual: 22 u.</span><span>Mínimo: 80 u.</span></div>
+    </div>
+    <div class="oc-card">
+      <div class="oc-title">ORDEN DE COMPRA GENERADA</div>
+      <div class="oc-sub">OC-2026-0341 · 120 unidades · envío automático a proveedor</div>
+    </div>
+  </div>
+
+  <!-- 11 precios -->
+  <div class="scene" id="scene15">
+    <div class="step-tag">Paso 12 · Control de precios</div>
+    <div class="scene-title">Cambio de precio detectado</div>
+    <div class="price-box">
+      <div class="price-old">$ 340</div>
+      <div class="price-arrow">→</div>
+      <div class="price-new">$ 398</div>
+    </div>
+    <div class="price-steps">
+      <div class="price-step" style="animation-delay:.4s"><span class="chk">✓</span> Detecta diferencia en factura</div>
+      <div class="price-step" style="animation-delay:.8s"><span class="chk">✓</span> Ingresa a ficha del insumo en GNS+</div>
+      <div class="price-step" style="animation-delay:1.2s"><span class="chk">✓</span> Actualiza precio y guarda cambio</div>
+    </div>
+  </div>
+
+  <!-- 12 reportes -->
+  <div class="scene" id="scene16">
+    <div class="step-tag">Paso 13 · Reportes automáticos</div>
+    <div class="report-card">
+      <div class="mail-hdr" style="margin-bottom:10px">📊 Reporte mensual · Compras</div>
+      <div class="report-row"><span>Comprobantes procesados</span><b>312</b></div>
+      <div class="report-row"><span>Órdenes de compra generadas</span><b>18</b></div>
+      <div class="report-row"><span>Errores manuales evitados</span><b>~40</b></div>
+      <div class="report-row"><span>Envío</span><b>1° de cada mes</b></div>
+    </div>
+  </div>
+
+  <!-- 13 cierre -->
+  <div class="scene" id="scene17">
+    <div class="step-tag">En resumen</div>
+    <div class="scene-title">Todo el flujo de Compras,<br>funcionando solo</div>
+    <div class="benefit-grid">
+      <div class="benefit-row" style="animation-delay:.15s"><span class="benefit-ico">⏱️</span><span class="benefit-txt">Horas liberadas cada semana</span></div>
+      <div class="benefit-row" style="animation-delay:.3s"><span class="benefit-ico">✅</span><span class="benefit-txt">Cero errores de tipeo</span></div>
+      <div class="benefit-row" style="animation-delay:.45s"><span class="benefit-ico">📈</span><span class="benefit-txt">Tiempo para analizar datos, no cargarlos</span></div>
+    </div>
+    <div class="scene-sub">Fin de la demo · gracias</div>
+  </div>
+
+  <div class="tap-zone left" id="tapLeft"></div>
+  <div class="tap-zone right" id="tapRight"></div>
+  <div class="audiobar">
+    <div class="nav-btn small" id="btnSeekBack" style="font-size:10px">⏪10</div>
+    <div class="nav-btn" id="btnPause" style="font-size:14px">▶</div>
+    <div class="nav-btn small" id="btnSeekFwd" style="font-size:10px">10⏩</div>
+    <div class="nav-btn" id="btnMute" style="font-size:14px">🔊</div>
+  </div>
+  <div class="navbar">
+    <div class="nav-btn" id="btnPrev">‹</div>
+    <div class="nav-count" id="navCount">1 / 14</div>
+    <div class="nav-btn" id="btnNext">›</div>
+  </div>
+  <select id="voiceSelect" style="position:absolute; bottom:106px; left:50%; transform:translateX(-50%);
+    max-width:260px; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text);
+    background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:3px 6px; z-index:10;"></select>
+</div>
+
+<script>
+  const scenes = [...document.querySelectorAll('.scene')];
+  const originals = scenes.map(s => s.cloneNode(true));
+  const total = scenes.length;
+  let current = 0;
+
+  // Rastrea los setTimeout de animaciones por-escena para poder cancelarlos
+  // al cambiar de diapositiva y evitar que se acumulen en segundo plano.
+  let sceneTimers = [];
+  function T(fn, delay){
+    const id = setTimeout(fn, delay);
+    sceneTimers.push(id);
+    return id;
+  }
+  function clearSceneTimers(){
+    sceneTimers.forEach(id => clearTimeout(id));
+    sceneTimers = [];
+  }
+
+  function typewriter(sceneEl){
+    const lines = [...sceneEl.querySelectorAll('.typeline')];
+    if(!lines.length) return;
+    const CHAR_MS = 16, LINE_GAP = 220, START_DELAY = 250;
+    lines.forEach(el=>{ el.textContent=''; el.classList.remove('cursor-off'); });
+    let cumulative = START_DELAY;
+    const timings = lines.map(el=>{
+      const plain = el.dataset.plain, html = el.dataset.html;
+      const start = cumulative, dur = Math.max(plain.length*CHAR_MS,1);
+      cumulative = start+dur+LINE_GAP;
+      return {el,plain,html,start,end:start+dur};
+    });
+    let startTs=null;
+    function frame(ts){
+      if(startTs===null) startTs=ts;
+      const elapsed = ts-startTs;
+      let allDone=true;
+      for(const t of timings){
+        if(elapsed<t.start){ allDone=false; }
+        else if(elapsed>=t.end){ if(t.el.innerHTML!==t.html){ t.el.innerHTML=t.html; t.el.classList.add('cursor-off'); } }
+        else { allDone=false; t.el.classList.remove('cursor-off');
+          const chars=Math.floor((elapsed-t.start)/CHAR_MS); t.el.textContent=t.plain.slice(0,chars); }
+      }
+      if(!allDone) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function runLogin(sceneEl){
+    const userEl = sceneEl.querySelector('#loginUser');
+    const passEl = sceneEl.querySelector('#loginPass');
+    const btn = sceneEl.querySelector('#loginBtn');
+    const status = sceneEl.querySelector('#loginStatus');
+    const user = 'robot.compras'; const pass = '••••••••';
+    let i=0;
+    function typeUser(){
+      if(i<=user.length){ userEl.textContent = user.slice(0,i); i++; T(typeUser,45); }
+      else { let j=0; function typePass(){ if(j<=pass.length){ passEl.textContent=pass.slice(0,j); j++; T(typePass,60); }
+        else { btn.classList.add('ready'); T(()=>{ status.textContent='Verificando credenciales...';
+          T(()=>{ status.textContent='✓ Acceso concedido'; status.style.color='var(--accent)'; },900); },500); } }
+        T(typePass,300); }
+    }
+    T(typeUser,400);
+  }
+
+  function typeInto(el, text, speed, cb){
+    let i=0;
+    el.classList.add('filled');
+    function step(){
+      if(i<=text.length){ el.textContent = text.slice(0,i); i++; T(step, speed); }
+      else if(cb){ cb(); }
+    }
+    step();
+  }
+
+  function runComprobanteSelect(sceneEl){
+    const search = sceneEl.querySelector('#gnsSearch');
+    const dropdown = sceneEl.querySelector('#gnsDropdown');
+    const opts = [...dropdown.querySelectorAll('div')];
+    T(()=>{
+      typeInto(search, 'credito', 55, ()=>{
+        dropdown.style.display = 'block';
+        T(()=>{ opts[0].classList.add('sel'); }, 500);
+      });
+    }, 400);
+  }
+
+  function runObligacion(sceneEl){
+    const ent = sceneEl.querySelector('#obEntidad');
+    const cat = sceneEl.querySelector('#obCategoria');
+    const tipo = sceneEl.querySelector('#obTipo');
+    const est = sceneEl.querySelector('#obEstado');
+    const prio = sceneEl.querySelector('#obPrioridad');
+    const resp = sceneEl.querySelector('#obResponsable');
+    const btn = sceneEl.querySelector('#obAceptar');
+    T(()=> typeInto(ent, 'Roche Internacional Ltd.', 30), 300);
+    T(()=> typeInto(cat, 'Pedido de Insumos', 35), 900);
+    T(()=> typeInto(tipo, 'Orden de Compra', 35), 1500);
+    T(()=> typeInto(est, 'Pendiente', 40), 2100);
+    T(()=> typeInto(prio, 'Alta', 50), 2600);
+    T(()=> typeInto(resp, 'Gonzalo Velázquez', 30), 3000);
+    T(()=>{ btn.classList.add('ready'); },3600);
+  }
+
+  function runOrdenCompra(sceneEl){
+    const total = sceneEl.querySelector('#ocTotal');
+    const btn = sceneEl.querySelector('#ocAceptar');
+    const confirm = sceneEl.querySelector('#ocConfirm');
+    T(()=>{ total.textContent='$ 19.216,43'; },1400);
+    T(()=>{ btn.classList.add('ready'); },1900);
+    T(()=>{ confirm.classList.add('show'); },2400);
+  }
+
+  function runMovTipoSelect(sceneEl){
+    const search = sceneEl.querySelector('#movSearch');
+    const dropdown = sceneEl.querySelector('#movDropdown');
+    const opt = dropdown.querySelector('div');
+    T(()=>{
+      typeInto(search, 'mov', 90, ()=>{
+        dropdown.style.display = 'block';
+        T(()=>{ opt.classList.add('sel'); }, 500);
+      });
+    }, 400);
+  }
+
+  function runMovModal(sceneEl){
+    const destino = sceneEl.querySelector('#movDepDestino');
+    const list = sceneEl.querySelector('#movDepList');
+    const medicare = sceneEl.querySelector('#medicareOpt');
+    const cod = sceneEl.querySelector('#movCod');
+    const cant = sceneEl.querySelector('#movCant');
+    const conc = sceneEl.querySelector('#movConc');
+    const btn = sceneEl.querySelector('#movAceptar');
+    const confirm = sceneEl.querySelector('#movConfirm');
+    T(()=>{
+      typeInto(destino, 'Inmunoquímica', 45, ()=>{
+        list.style.display = 'block';
+        T(()=> medicare.classList.add('selnow'), 400);
+        T(()=>{ list.style.display = 'none'; }, 1100);
+      });
+    }, 400);
+    T(()=>{ cod.textContent='RCT-2210'; cant.textContent='x 30'; conc.textContent='Reactivo Química Clínica'; },1800);
+    T(()=>{ btn.classList.add('ready'); },2300);
+    T(()=>{ confirm.classList.add('show'); },2800);
+  }
+
+  function runComprobanteModal(sceneEl){
+    const prov = sceneEl.querySelector('#fProveedor');
+    const dep = sceneEl.querySelector('#fDeposito');
+    const mon = sceneEl.querySelector('#fMoneda');
+    const serie = sceneEl.querySelector('#fSerie');
+    const total = sceneEl.querySelector('#fTotal');
+    const btn = sceneEl.querySelector('#gnsAceptar');
+    const confirm = sceneEl.querySelector('#gnsConfirm');
+    const cod = sceneEl.querySelector('#itCod');
+    const cant = sceneEl.querySelector('#itCant');
+    const conc = sceneEl.querySelector('#itConc');
+    T(()=> typeInto(prov, 'Roche Diagnostics', 35), 300);
+    T(()=> typeInto(dep, 'Casa Central', 35), 900);
+    T(()=> typeInto(mon, '$', 60), 1400);
+    T(()=> typeInto(serie, 'A0001-00456', 35), 1700);
+    T(()=>{ cod.textContent='RCH-4501'; cant.textContent='x 12'; conc.textContent='Reactivo HbA1c'; },2400);
+    T(()=>{ total.textContent='$ 48.720'; },2900);
+    T(()=>{ btn.classList.add('ready'); },3200);
+    T(()=>{ confirm.classList.add('show'); },3800);
+  }
+
+  function runPedido(sceneEl){
+    const status = sceneEl.querySelector('#pedidoPill');
+    if(!status) return;
+    T(()=>{ status.textContent='enviado'; status.classList.add('ok'); },1900);
+    sceneEl.querySelectorAll('.ingest-log div').forEach(d=>{
+      const delay = parseFloat(d.style.animationDelay)*1000;
+      T(()=> d.classList.add('show'), delay);
+    });
+  }
+
+  function runToast(sceneEl){
+    const toast = sceneEl.querySelector('.toast');
+    if(!toast) return;
+    T(()=> toast.classList.add('show'), 700);
+  }
+
+  function showScene(i){
+    clearSceneTimers();
+    scenes.forEach((s,idx)=>{
+      if(idx===i){
+        const clone = originals[idx].cloneNode(true);
+        s.replaceWith(clone);
+        scenes[idx]=clone;
+        requestAnimationFrame(()=>{
+          clone.classList.add('active');
+          typewriter(clone);
+          if(idx===4) runToast(clone);
+          if(idx===5) runLogin(clone);
+          if(idx===6) runComprobanteSelect(clone);
+          if(idx===7) runComprobanteModal(clone);
+          if(idx===8) runMovTipoSelect(clone);
+          if(idx===9) runMovModal(clone);
+          if(idx===11) runObligacion(clone);
+          if(idx===12) runOrdenCompra(clone);
+        });
+      } else {
+        s.classList.remove('active');
+      }
+    });
+    current = i;
+    speakScene(i);
+    document.getElementById('navCount').textContent = (i+1)+' / '+total;
+    document.getElementById('progressFill').style.width = ((i+1)/total*100)+'%';
+  }
+
+  const NARRATION = [
+    "Buenas. Les quiero mostrar un proyecto de transformación digital para el sector de Compras. Es un proceso de transformación que puedo diseñar e implementar para el sector.",
+    "Hoy todo esto se hace a mano, todos los días: revisar mails uno por uno, imprimir e ingresar a mano en GNS+, el ingreso de facturas y la generación de órdenes de compra, mover stock entre depósitos, y reduce al 100 por ciento los errores de tipeo, aunque poco frecuentes. Este proyecto automatiza cada uno de estos pasos.",
+    "Arranca con el mail. El procesador entraría solo a la casilla de correo todos los días, revisa los adjuntos y clasifica automáticamente qué es cada uno: remitos, facturas, contado o pedidos en X L S.",
+    "No solo lee el archivo: entiende qué es. Detecta el número de comprobante, el lote y el vencimiento directamente del texto del P D F, usando palabras clave, sin que nadie tenga que abrirlo.",
+    "Antes de procesar la factura, el sistema espera la confirmación de Stock. En cuanto alguien responde el mail dando el ok de que la mercadería llegó, se descarga el P D F automáticamente y sigue el flujo.",
+    "Ahí entra el robot, un procesador generado, que entra a G N S plus e inicia sesión con un usuario dedicado, como lo haría cualquier persona del equipo.",
+    "Dentro del sistema, escribe la palabra clave del tipo de comprobante y selecciona la opción correcta, en este caso, Compra Crédito, tal cual se hace hoy a mano.",
+    "Completa el formulario real: proveedor, depósito destino, moneda, número de serie, y carga el ítem con su código, cantidad y concepto. Y si tiene lote y vencimiento, selecciona el ítem correcto y lo ingresa también.",
+    "En paralelo está el tema de movimientos entre depósitos: otro procesador, como lo hacemos actualmente, realiza los movimientos entre depósitos según la familia de cada insumo, seleccionando directamente el tipo de comprobante Movimiento de Stock.",
+    "Y completa el movimiento: depósito origen, depósito destino, automático según la familia del insumo, código, cantidad y concepto. Esto corre todos los días a la misma hora, sin errores de tipeo.",
+    "El pedido de insumos llega en un archivo Excel adjunto al mail. El procesador lo detecta y lo descarga automáticamente, leyendo cada artículo con su código, cantidad y concepto.",
+    "Para los pedidos de insumos, el flujo es distinto: primero se registra como una obligación en G N S plus, entidad, categoría, tipo, estado, prioridad y responsable, a partir del pedido recibido por mail.",
+    "Esa obligación se convierte en una orden de compra real, con cada ítem, su precio unitario y el total, lista para enviarse al proveedor.",
+    "Los pedidos de Roche tienen su propio circuito: el sistema reconoce el formato propio de ellos y lo procesa directamente en su programa, diferenciando si es un pedido común, una urgencia o algo puntual.",
+    "Otra pata clave es el stock mínimo. El sistema monitorea cada insumo contra su mínimo definido, y en cuanto detecta que algo está por debajo, genera la orden de compra automáticamente.",
+    "También controla precios: si detecta una diferencia entre lo facturado y lo cargado en el sistema, entra a la ficha del insumo en G N S plus y actualiza el precio solo, siguiendo los pasos que hoy hacemos a mano.",
+    "Y todos los meses, en la fecha que se defina, se puede armar y enviar un reporte automático con toda esta información: comprobantes procesados, órdenes generadas, errores evitados.",
+    "En resumen: todo el flujo de Compras funcionando solo. Horas liberadas cada semana, cero errores de tipeo, y tiempo real para analizar los datos en vez de cargarlos. Esa es la propuesta."
+  ];
+
+  let voices = [];
+  let selectedVoice = null;
+  let audioEnabled = true;
+  let isPaused = true;
+  let advanceState = null; // {idx, remaining, startTs, timer}
+  const MIN_MS = { 6:1700, 7:4100, 8:1500, 9:3100, 10:1000, 11:3900, 12:2700 };
+
+  function clearAutoAdvance(){
+    if(advanceState && advanceState.timer){ clearTimeout(advanceState.timer); }
+    advanceState = null;
+  }
+
+  function scheduleAdvance(idx, baseDelay){
+    clearAutoAdvance();
+    if(idx >= total - 1) return; // no avanzar después del cierre
+    const delay = Math.max(baseDelay, MIN_MS[idx] || 0);
+    advanceState = { idx, remaining: delay, startTs: performance.now(), timer: null };
+    if(!isPaused){
+      advanceState.timer = setTimeout(()=>{ if(current===idx) goTo(idx+1); }, delay);
+    }
+  }
+
+  function estimateMs(text){ return Math.max(1200, text.length * (1000/(CPS*SPEECH_RATE))); }
+
+  function togglePause(){
+    isPaused = !isPaused;
+    document.getElementById('btnPause').textContent = isPaused ? '▶' : '⏸';
+    if('speechSynthesis' in window){
+      if(isPaused){
+        speechSynthesis.pause();
+      } else if(speechSynthesis.paused){
+        speechSynthesis.resume();
+      } else if(!speechSynthesis.speaking && audioEnabled){
+        // nada quedó realmente en cola (bloqueado por autoplay o ya terminó) -> reiniciar desde la posición estimada
+        speakFrom(current, Math.round(estimatedCurrentPos()));
+        return;
+      }
+    }
+    if(isPaused){
+      if(advanceState && advanceState.timer){
+        const elapsed = performance.now() - advanceState.startTs;
+        advanceState.remaining = Math.max(0, advanceState.remaining - elapsed);
+        clearTimeout(advanceState.timer);
+        advanceState.timer = null;
+      }
+    } else {
+      if(advanceState){
+        const idx = advanceState.idx, remaining = advanceState.remaining;
+        advanceState.startTs = performance.now();
+        advanceState.timer = setTimeout(()=>{ if(current===idx) goTo(idx+1); }, remaining);
+      }
+    }
+  }
+
+  function pickMaleSpanishVoice(){
+    voices = speechSynthesis.getVoices();
+    if(!voices.length) return null;
+    const maleNames = ['jorge','diego','carlos','juan','raul','raúl','enrique','miguel','alonso','fernando','andrés','andres','male','hombre','david','daniel','felipe','sebastián','sebastian'];
+    const isSpanishish = v => (v.lang && v.lang.toLowerCase().startsWith('es')) || /español|spanish/i.test(v.name);
+    const spanishPool = voices.filter(isSpanishish);
+    const pool = spanishPool.length ? spanishPool : voices;
+    const rio = pool.filter(v => /es[-_]ar|es[-_]uy/i.test(v.lang||''));
+    const latam = pool.filter(v => /es[-_](ar|uy|mx|us|co|cl|pe|ve|ec|py|bo|do|gt|cr|pa|hn|sv|ni|419)/i.test(v.lang||''));
+    const spain = pool.filter(v => /es[-_]es/i.test(v.lang||''));
+    function findMale(list){ return list.find(v => maleNames.some(n => v.name.toLowerCase().includes(n))); }
+    // 1) Buscar masculino explícito, primero dentro del pool en español; si no aparece, en TODAS las voces del sistema
+    let m = findMale(rio) || findMale(latam) || findMale(pool.filter(v => !spain.includes(v))) || findMale(spain) || findMale(voices);
+    voiceIsMale = !!m;
+    if(m) return m;
+    // 2) No hay ninguna voz masculina real disponible: usar la mejor alternativa igual
+    let fallback = rio[0] || latam[0] || pool.find(v => !spain.includes(v)) || spain[0] || pool[0];
+    return fallback || null;
+  }
+
+  let voiceIsMale = false;
+  let voicesPopulated = false;
+
+  let userPickedVoice = false;
+  const VOICE_STORAGE_KEY = 'demoVoicePref';
+
+  function savedVoicePref(){
+    try {
+      const raw = localStorage.getItem(VOICE_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e){ return null; }
+  }
+
+  function saveVoicePref(v){
+    try { localStorage.setItem(VOICE_STORAGE_KEY, JSON.stringify({ name: v.name, lang: v.lang })); }
+    catch(e){}
+  }
+
+  function refreshVoice(){
+    voices = speechSynthesis.getVoices();
+    if(!voices.length) return;
+    populateVoiceSelect();
+    if(!userPickedVoice){
+      const pref = savedVoicePref();
+      const matched = pref && voices.find(v => v.name === pref.name && v.lang === pref.lang);
+      if(matched){
+        selectedVoice = matched;
+        userPickedVoice = true;
+        voiceIsMale = /jorge|diego|carlos|juan|raul|raúl|enrique|miguel|alonso|fernando|andrés|andres|male|hombre|david|daniel|felipe|sebastián|sebastian/i.test(matched.name);
+      } else {
+        const v = pickMaleSpanishVoice();
+        if(v){
+          selectedVoice = v;
+          if((v.lang||'').toLowerCase().startsWith('es')) saveVoicePref(v);
+        }
+      }
+    }
+    syncSelectToVoice();
+  }
+
+  if('speechSynthesis' in window){
+    speechSynthesis.onvoiceschanged = refreshVoice;
+    refreshVoice();
+    // Chrome a veces carga la lista de voces con retraso o en un segundo evento
+    setTimeout(refreshVoice, 300);
+    setTimeout(refreshVoice, 1000);
+    setTimeout(refreshVoice, 2500);
+  }
+
+  function populateVoiceSelect(){
+    const sel = document.getElementById('voiceSelect');
+    if(!sel || voicesPopulated) return;
+    if(!voices.length) return;
+    const esVoices = voices.filter(v => (v.lang||'').toLowerCase().startsWith('es'));
+    const rest = voices.filter(v => !esVoices.includes(v));
+    const ordered = [...esVoices, ...rest];
+    if(!ordered.length) return;
+    sel.innerHTML = '';
+    ordered.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v.name + '||' + v.lang;
+      opt.textContent = v.name + ' (' + v.lang + ')';
+      sel.appendChild(opt);
+    });
+    voicesPopulated = true;
+    sel.addEventListener('change', ()=>{
+      const [name, lang] = sel.value.split('||');
+      const found = voices.find(v => v.name === name && v.lang === lang);
+      if(found){
+        selectedVoice = found;
+        userPickedVoice = true;
+        saveVoicePref(found);
+        voiceIsMale = /jorge|diego|carlos|juan|raul|raúl|enrique|miguel|alonso|fernando|andrés|andres|male|hombre|david|daniel|felipe|sebastián|sebastian/i.test(found.name);
+        speakScene(current);
+      }
+    });
+  }
+
+  function syncSelectToVoice(){
+    const sel = document.getElementById('voiceSelect');
+    if(!sel || !selectedVoice) return;
+    const val = selectedVoice.name + '||' + selectedVoice.lang;
+    if([...sel.options].some(o => o.value === val)) sel.value = val;
+  }
+
+  const SPEECH_RATE = 1.15;
+  const CPS = 14; // caracteres por segundo estimados, a rate=1
+  let uttOffset = 0;       // offset dentro del texto completo donde arrancó la utterance actual
+  let charIndexApprox = 0; // mejor estimación de la posición actual dentro del texto completo
+  let uttStartTs = null;
+  let currentSpeakToken = null; // identifica la corrida activa de speakFrom, para descartar callbacks viejos
+
+  let keepAliveTimer = null;
+
+  function startKeepAlive(estimatedDurationMs){
+    stopKeepAlive();
+    if(estimatedDurationMs < 13000) return; // texto corto: no hace falta el parche, evita cortes de más
+    function tick(){
+      keepAliveTimer = setTimeout(()=>{
+        if('speechSynthesis' in window && speechSynthesis.speaking && !isPaused){
+          speechSynthesis.pause();
+          speechSynthesis.resume();
+          tick();
+        }
+      }, 12000);
+    }
+    tick();
+  }
+
+  function stopKeepAlive(){
+    if(keepAliveTimer){ clearTimeout(keepAliveTimer); keepAliveTimer = null; }
+  }
+
+  function splitSentences(text){
+    // separa en oraciones, conservando el punto final de cada una
+    const parts = text.match(/[^.!?]+[.!?]*\s*/g) || [text];
+    return parts.filter(p => p.trim().length);
+  }
+
+  function speakFrom(idx, offset){
+    clearAutoAdvance();
+    stopKeepAlive();
+    const fullText = NARRATION[idx];
+    if(!fullText) return;
+    offset = Math.max(0, Math.min(fullText.length - 1, offset || 0));
+    uttOffset = offset;
+    charIndexApprox = offset;
+    uttStartTs = performance.now();
+    const toSpeak = fullText.slice(offset);
+    if(!('speechSynthesis' in window) || !audioEnabled){
+      scheduleAdvance(idx, estimateMs(toSpeak));
+      return;
+    }
+    speechSynthesis.cancel();
+    const segments = splitSentences(toSpeak);
+    let segOffset = offset; // posición absoluta dentro de fullText donde arranca cada segmento
+    const speakToken = {}; // identifica esta corrida de speakFrom para descartar callbacks viejos si se cancela
+    currentSpeakToken = speakToken;
+
+    function speakSegment(segIdx){
+      if(speakToken !== currentSpeakToken) return; // se canceló/reemplazó esta corrida
+      if(segIdx >= segments.length){
+        scheduleAdvance(idx, 500);
+        return;
+      }
+      const seg = segments[segIdx];
+      const utter = new SpeechSynthesisUtterance(seg);
+      utter.lang = (selectedVoice && selectedVoice.lang) || 'es-ES';
+      if(selectedVoice) utter.voice = selectedVoice;
+      utter.rate = SPEECH_RATE;
+      utter.pitch = 1;
+      utter.onboundary = (e)=>{ if(speakToken===currentSpeakToken) charIndexApprox = segOffset + e.charIndex; };
+      utter.onend = ()=>{
+        if(speakToken !== currentSpeakToken) return;
+        segOffset += seg.length;
+        charIndexApprox = segOffset;
+        speakSegment(segIdx + 1);
+      };
+      utter.onerror = ()=>{
+        if(speakToken !== currentSpeakToken) return;
+        segOffset += seg.length;
+        speakSegment(segIdx + 1);
+      };
+      speechSynthesis.speak(utter);
+    }
+
+    speakSegment(0);
+    // red de seguridad: si algo se traba y ningún segmento dispara onend, igual avanza
+    scheduleAdvance(idx, estimateMs(toSpeak) + 800);
+  }
+
+  function speakScene(idx){ if(isPaused) return; speakFrom(idx, 0); }
+
+
+  function estimatedCurrentPos(){
+    let pos = charIndexApprox;
+    if(uttStartTs && !isPaused){
+      const elapsed = (performance.now() - uttStartTs) / 1000;
+      const estByTime = uttOffset + elapsed * CPS * SPEECH_RATE;
+      pos = Math.max(pos, estByTime);
+    }
+    return pos;
+  }
+
+  function seekSeconds(delta){
+    if(!('speechSynthesis' in window)) return;
+    const idx = current;
+    const fullText = NARRATION[idx];
+    if(!fullText) return;
+    const pos = estimatedCurrentPos();
+    const deltaChars = delta * CPS * SPEECH_RATE;
+    let newPos = Math.round(pos + deltaChars);
+    newPos = Math.max(0, Math.min(fullText.length - 1, newPos));
+    const wasPaused = isPaused;
+    speakFrom(idx, newPos);
+    if(wasPaused){
+      isPaused = false;
+      togglePause(); // vuelve a pausar ya en la nueva posición
+    }
+  }
+
+  document.getElementById('btnPause').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    togglePause();
+  });
+
+  document.getElementById('btnMute').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    audioEnabled = !audioEnabled;
+    document.getElementById('btnMute').textContent = audioEnabled ? '🔊' : '🔇';
+    if(!audioEnabled){ speechSynthesis.cancel(); stopKeepAlive(); }
+    else speakScene(current);
+  });
+
+  function goTo(i){ if(i<0||i>=total) return; clearAutoAdvance(); showScene(i); }
+
+  document.getElementById('tapRight').addEventListener('click', ()=> goTo(current+1));
+  document.getElementById('tapLeft').addEventListener('click', ()=> goTo(current-1));
+  document.getElementById('btnNext').addEventListener('click', (e)=>{ e.stopPropagation(); goTo(current+1); });
+  document.getElementById('btnPrev').addEventListener('click', (e)=>{ e.stopPropagation(); goTo(current-1); });
+  document.getElementById('btnSeekBack').addEventListener('click', (e)=>{ e.stopPropagation(); seekSeconds(-10); });
+  document.getElementById('btnSeekFwd').addEventListener('click', (e)=>{ e.stopPropagation(); seekSeconds(10); });
+
+  showScene(0);
+</script>
+</body>
+</html>
